@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kantongable/widgets/left_drawer.dart';
 
 class MyHomePage extends StatelessWidget {
   MyHomePage({Key? key}) : super(key: key);
@@ -16,8 +17,10 @@ class MyHomePage extends StatelessWidget {
           'Andhika Finnanda Rayhan 2206826551',
           style: TextStyle(color: Colors.white),
         ),
+        foregroundColor: Colors.white,
         backgroundColor: Colors.black,
       ),
+      drawer: const LeftDrawer(),
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
         // Widget wrapper yang dapat discroll
