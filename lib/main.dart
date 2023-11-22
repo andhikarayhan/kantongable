@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kantongable/menu.dart';
+import 'package:kantongable/screens/menu.dart';
 
 void main() {
   runApp(const MyApp());
