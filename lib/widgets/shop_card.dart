@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kantongable/screens/item_form.dart';
+import 'package:kantongable/screens/list_item.dart';
 
 class ShopItem {
   final String name;
@@ -34,6 +35,9 @@ class ShopCard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => const ShopFormPage(),
                 ));
+          } else if (item.name == "Lihat Item") {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const ItemPage()));
           }
         },
         child: Container(
