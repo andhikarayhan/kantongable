@@ -1,5 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:kantongable/screens/menu.dart';
 import 'package:kantongable/widgets/left_drawer.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 class ShopFormPage extends StatefulWidget {
   const ShopFormPage({super.key});
@@ -10,18 +17,17 @@ class ShopFormPage extends StatefulWidget {
 
 class _ShopFormPageState extends State<ShopFormPage> {
   final _formKey = GlobalKey<FormState>();
-  String _name = "";
-  int _price = 0;
-  String _description = "";
+  String _brand = "";
+  String _model = "";
+  int _amount = 0;
+  String _engineSpec = "";
+
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Scaffold(
       appBar: AppBar(
-        title: const Center(
-          child: Text(
-            'Form Tambah Item',
-          ),
-        ),
+        title: const Center(child: Text('Form Tambah Item')),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
@@ -36,19 +42,19 @@ class _ShopFormPageState extends State<ShopFormPage> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
-                      hintText: "Nama Item",
-                      labelText: "Nama Item",
+                      hintText: "Brand",
+                      labelText: "Brand",
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       )),
                   onChanged: (String? value) {
                     setState(() {
-                      _name = value!;
+                      _brand = value ?? '';
                     });
                   },
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
-                      return "Item tidak boleh kosong";
+                      return "Brand cannot be empty";
                     }
                     return null;
                   },
@@ -58,23 +64,45 @@ class _ShopFormPageState extends State<ShopFormPage> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    hintText: "Harga",
-                    labelText: "Harga",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
+                      hintText: "Model",
+                      labelText: "Model",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5.0),
+                      )),
                   onChanged: (String? value) {
                     setState(() {
-                      _price = int.parse(value!);
+                      _model = value ?? '';
                     });
                   },
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
-                      return "Harga tidak boleh kosong!";
+                      return "Model cannot be empty";
                     }
-                    if (int.tryParse(value) == null) {
-                      return "Harga harus berupa angka!";
+                    return null;
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                      hintText: "Amount",
+                      labelText: "Amount",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5.0),
+                      )),
+                  onChanged: (String? value) {
+                    setState(() {
+                      _amount = int.tryParse(value ?? '0') ?? 0;
+                    });
+                  },
+                  validator: (String? value) {
+                    if (value == null || value.isEmpty) {
+                      return "Amount cannot be empty";
+                    }
+                    if (_amount < 0) {
+                      return "Amount cannot be negative";
                     }
                     return null;
                   },
@@ -84,68 +112,64 @@ class _ShopFormPageState extends State<ShopFormPage> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    hintText: "Deskripsi",
-                    labelText: "Deskripsi",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
+                      hintText: "Engine Specification",
+                      labelText: "Engine Spec",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5.0),
+                      )),
                   onChanged: (String? value) {
                     setState(() {
-                      _description = value!;
+                      _engineSpec = value ?? '';
                     });
                   },
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
-                      return "Deskripsi tidak boleh kosong!";
+                      return "Engine specification cannot be empty";
                     }
                     return null;
                   },
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(Colors.black),
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Item berhasil tersimpan'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Nama: $_name'),
-                                    Text('Price: $_price'),
-                                    Text('Description: $_description'),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ],
-                            );
-                          },
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(Colors.black),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final response = await request.postJson(
+                        "http://127.0.0.1:8000/create-flutter/",
+                        jsonEncode(<String, String>{
+                          'brand': _brand,
+                          'model': _model,
+                          'amount': _amount.toString(),
+                          'engine_spec': _engineSpec,
+                        }),
+                      );
+                      if (response['status'] == 'success') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Product successfully saved!"),
+                          ),
                         );
-                        _formKey.currentState!.reset();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyHomePage()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text("There was an error, please try again."),
+                          ),
+                        );
                       }
-                    },
-                    child: const Text(
-                      "Save",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    }
+                  },
+                  child: const Text(
+                    "Save",
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),
